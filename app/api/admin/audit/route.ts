@@ -1,0 +1,3 @@
+import { requireApiUser } from "@/app/app-auth";
+import { ensureSchema,getD1 } from "@/db/runtime";
+export async function GET(){const user=await requireApiUser();if(!user||!["admin","super_admin"].includes(user.role))return Response.json({error:"Akses tidak diberikan."},{status:403});await ensureSchema();const rows=await getD1().prepare(`SELECT l.id,l.submission_id AS submissionId,l.actor_name AS actorName,l.actor_email AS actorEmail,l.action,l.detail,l.created_at AS createdAt,s.number FROM audit_logs l LEFT JOIN submissions s ON s.id=l.submission_id ORDER BY l.created_at DESC LIMIT 250`).all();return Response.json({logs:rows.results});}

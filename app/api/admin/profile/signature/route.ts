@@ -1,0 +1,3 @@
+import { requireApiUser } from "@/app/app-auth";
+import { ensureSchema,getBucket,getD1 } from "@/db/runtime";
+export async function GET(){const user=await requireApiUser();if(!user)return new Response("Unauthorized",{status:401});await ensureSchema();const row=await getD1().prepare("SELECT signature_key AS signatureKey FROM users WHERE email = ?").bind(user.email).first<{signatureKey:string}>();if(!row?.signatureKey)return new Response("Not found",{status:404});const object=await getBucket().get(row.signatureKey);if(!object)return new Response("Not found",{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set("cache-control","private, no-store");return new Response(object.body,{headers})}

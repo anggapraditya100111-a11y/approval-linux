@@ -1,0 +1,14 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { formatDate, formatRupiah, statusLabel } from "@/lib/presentation";
+
+type Detail = { submission: any; approvals:any[]; documents:any[] };
+const fileUrl=(key:string)=>`/api/admin/files?key=${encodeURIComponent(key)}`;
+
+export default function PrintableSubmission({id}:{id:string}){
+  const[data,setData]=useState<Detail|null>(null);
+  useEffect(()=>{fetch(`/api/admin/submissions/${id}`).then(r=>r.json()).then(setData)},[id]);
+  if(!data)return <div className="print-loading">Menyiapkan dokumen...</div>;const s=data.submission;
+  return <main className="print-page"><div className="print-tools"><button onClick={()=>window.print()}>Cetak / Simpan PDF</button><button onClick={()=>window.close()}>Tutup</button></div><article className="approval-document"><header><div className="print-brand"><span>A</span><div><b>AINET</b><small>PT AXINDO INFINITAS NETWORK</small></div></div><div><b>FORMULIR PERSETUJUAN INTERNAL</b><small>{s.number}</small></div></header><section className="print-title"><span>{s.formTypeName}</span><h1>{s.title}</h1><div><b>{statusLabel(s.status)}</b><small>Diajukan {formatDate(s.createdAt,true)}</small></div></section><section><h2>A. IDENTITAS PEMOHON</h2><div className="print-grid"><label>Nama lengkap<b>{s.requesterName}</b></label><label>Jabatan<b>{s.requesterPosition}</b></label><label>Divisi / PoP<b>{s.requesterUnit}</b></label><label>Nomor WhatsApp<b>{s.requesterPhone}</b></label></div></section><section><h2>B. RINCIAN PENGAJUAN</h2><p className="print-description">{s.description}</p><div className="print-grid two"><label>Nominal pengajuan<b>{s.amount?formatRupiah(s.amount):"Tidak dicantumkan"}</b></label><label>Tanggal dibutuhkan<b>{s.neededDate?formatDate(s.neededDate):"—"}</b></label></div></section><section><h2>C. PERNYATAAN DAN TANDA TANGAN PEMOHON</h2><p className="print-statement">Saya menyatakan bahwa data dan dokumen yang disampaikan benar serta dapat dipertanggungjawabkan.</p><div className="print-signatures requester"><div><small>Pemohon</small><img src={fileUrl(s.requesterSignatureKey)} alt="Tanda tangan pemohon"/><b>{s.requesterName}</b><em>{s.requesterPosition}</em></div></div></section><section><h2>D. PERSETUJUAN</h2>{data.approvals.length?<div className="print-signatures approvals">{data.approvals.map(a=><div key={a.id}><small>Tahap {a.stepNumber} • {a.status}</small>{a.signatureKey?<img src={fileUrl(a.signatureKey)} alt={`Tanda tangan ${a.approverName}`}/>:<span className="signature-space"/>}<b>{a.approverName}</b><em>{a.approverTitle}</em>{a.actedAt&&<time>{formatDate(a.actedAt,true)}</time>}{a.note&&<p>{a.note}</p>}</div>)}</div>:<p className="print-empty">Alur persetujuan belum ditetapkan.</p>}</section><footer><span>Dokumen ini dibuat secara elektronik melalui AINET Approval.</span><b>{s.number}</b></footer></article></main>
+}
