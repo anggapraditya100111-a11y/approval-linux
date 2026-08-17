@@ -1,0 +1,27 @@
+services:
+  ainet-approval:
+    container_name: ainet-approval
+    build: .
+    image: ainet-approval:1.1.0
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8093
+      HOSTNAME: 0.0.0.0
+      DATA_DIR: /app/data
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@ainet.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-GantiPasswordIni!}
+      APP_ACCESS_PASSWORD: ${APP_ACCESS_PASSWORD:-GantiPasswordAkses!}
+      APP_BASE_URL: ${APP_BASE_URL:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - "${APP_PORT:-8093}:8093"
+    volumes:
+      - ${DATA_PATH:-./data}:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8093/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

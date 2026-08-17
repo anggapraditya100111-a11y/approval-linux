@@ -1,0 +1,11 @@
+"use client";
+import { FormEvent,useEffect,useRef,useState } from "react";
+import SignaturePad,{SignaturePadHandle} from "./SignaturePad";
+
+export default function AdminProfile(){
+  const [profile,setProfile]=useState<{name:string;email:string;jobTitle:string;hasSignature:boolean}|null>(null);const [busy,setBusy]=useState(false);const [message,setMessage]=useState("");const sig=useRef<SignaturePadHandle>(null);
+  function load(){fetch("/api/admin/profile").then(r=>r.json()).then(setProfile)} useEffect(load,[]);
+  async function save(e:FormEvent){e.preventDefault();if(sig.current?.isEmpty()){setMessage("Bubuhkan tanda tangan baru terlebih dahulu.");return}const blob=await sig.current?.toBlob();if(!blob)return;const f=new FormData();f.set("signature",blob,"tanda-tangan.png");setBusy(true);const r=await fetch("/api/admin/profile",{method:"POST",body:f});const b=await r.json();setMessage(r.ok?"Tanda tangan berhasil disimpan.":b.error);if(r.ok){sig.current?.clear();load()}setBusy(false)}
+  return <div className="admin-page"><div className="admin-topline"><div><span className="eyebrow">Profil pejabat</span><h1>Tanda tangan saya</h1><p>Simpan satu tanda tangan untuk digunakan kembali pada persetujuan berikutnya.</p></div></div>{profile&&<div className="profile-grid"><section className="admin-card profile-card"><div className="card-heading"><div><b>Identitas pengguna</b><small>{profile.email}</small></div></div><div className="profile-identity"><span>{profile.name.split(/\s+/).slice(0,2).map(x=>x[0]).join("")}</span><div><b>{profile.name}</b><small>{profile.jobTitle}</small></div></div>{profile.hasSignature?<div className="stored-signature"><small>Tanda tangan tersimpan</small><img src="/api/admin/profile/signature" alt="Tanda tangan tersimpan"/><b>Siap digunakan</b></div>:<div className="mini-empty">Belum ada tanda tangan tersimpan.</div>}</section><section className="admin-card profile-card"><div className="card-heading"><div><b>{profile.hasSignature?"Perbarui tanda tangan":"Simpan tanda tangan awal"}</b><small>Gunakan jari atau mouse pada area di bawah</small></div></div><form onSubmit={save}><SignaturePad ref={sig}/>{message&&<p className="field-message">{message}</p>}<button disabled={busy} className="button primary">{busy?"Menyimpan...":"Simpan tanda tangan"}</button></form></section></div>}
+  </div>
+}
