@@ -2,7 +2,7 @@ services:
   ainet-approval:
     container_name: ainet-approval
     build: .
-    image: ainet-approval:1.1.0
+    image: ainet-approval:1.2.0
     restart: unless-stopped
     environment:
       NODE_ENV: production

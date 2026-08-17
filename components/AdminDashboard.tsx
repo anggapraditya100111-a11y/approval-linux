@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { formatDate, formatRupiah, statusLabel } from "@/lib/presentation";
+import { useBranding } from "@/components/BrandingProvider";
 
 type Submission = { id: string; number: string; title: string; requesterName: string; requesterUnit: string; formTypeName: string; amount: number; status: string; currentStep: number; createdAt: string };
 type Data = { counts: Record<string, number>; totalAmount: number; latest: Submission[]; pendingMine: Submission[]; user: { name: string; role: string } };
 
 export default function AdminDashboard({ view = "dashboard" }: { view?: string }) {
+  const { branding } = useBranding();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
   useEffect(() => { fetch(`/api/admin/summary?view=${view}`).then(async (r) => { const body = await r.json(); if (!r.ok) throw new Error(body.error); setData(body); }).catch((e) => setError(e.message)); }, [view]);
@@ -17,7 +19,7 @@ export default function AdminDashboard({ view = "dashboard" }: { view?: string }
   const rows = view === "persetujuan" ? data.pendingMine : data.latest;
   return (
     <div className="admin-page">
-      <div className="admin-topline"><div><span className="eyebrow">AINET Approval</span><h1>{titleMap[view] || titleMap.dashboard}</h1><p>Selamat datang, {data.user.name}. Pantau proses pengajuan internal secara terpusat.</p></div><a href="/" target="_blank" className="button primary">Buka formulir publik <span>↗</span></a></div>
+      <div className="admin-topline"><div><span className="eyebrow">{branding.appName}</span><h1>{titleMap[view] || titleMap.dashboard}</h1><p>Selamat datang, {data.user.name}. Pantau proses pengajuan internal secara terpusat.</p></div><a href="/" target="_blank" className="button primary">Buka formulir publik <span>↗</span></a></div>
       {view === "dashboard" && <>
         <div className="stat-grid">
           <article><span className="stat-icon blue">＋</span><div><small>Pemeriksaan HRGA</small><b>{(counts.baru || 0)+(counts.menunggu_hrga||0)}</b><em>Perlu diperiksa & ditandatangani</em></div></article>

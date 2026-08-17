@@ -1,14 +1,8 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { ACCESS_COOKIE_NAME, getAccessPasswordHash } from "@/lib/access-gate";
 
-const ACCESS_COOKIE_NAME = "ainet_access";
-const PUBLIC_PATHS = new Set(["/akses-awal", "/api/access", "/health"]);
-
-function accessCookieValue(password: string) {
-  return createHash("sha256")
-    .update(`ainet-approval:access:v1:${password}`)
-    .digest("hex");
-}
+const PUBLIC_PATHS = new Set(["/akses-awal", "/api/access", "/api/branding/logo", "/health"]);
 
 function matches(actual: string | undefined, expected: string) {
   if (!actual || actual.length !== expected.length) return false;
@@ -19,8 +13,7 @@ export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
 
-  const configuredPassword = process.env.APP_ACCESS_PASSWORD || "";
-  const expectedCookie = configuredPassword ? accessCookieValue(configuredPassword) : "";
+  const expectedCookie = getAccessPasswordHash();
   const hasAccess = Boolean(expectedCookie) && matches(
     request.cookies.get(ACCESS_COOKIE_NAME)?.value,
     expectedCookie,
@@ -30,8 +23,8 @@ export function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/")) {
     return NextResponse.json(
-      { error: configuredPassword ? "Password akses awal diperlukan." : "Password akses awal belum dikonfigurasi." },
-      { status: configuredPassword ? 401 : 503 },
+      { error: expectedCookie ? "Password akses awal diperlukan." : "Password akses awal belum dikonfigurasi." },
+      { status: expectedCookie ? 401 : 503 },
     );
   }
 

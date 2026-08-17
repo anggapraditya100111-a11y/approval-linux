@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 
@@ -45,7 +45,7 @@ function objectPath(key: string) {
 
 function inferredMime(key: string) {
   const ext = path.extname(key).toLowerCase();
-  return ext === ".pdf" ? "application/pdf" : ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : "image/png";
+  return ext === ".pdf" ? "application/pdf" : ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : ext === ".webp" ? "image/webp" : "image/png";
 }
 
 export function getBucket() {
@@ -67,6 +67,11 @@ export function getBucket() {
         };
       } catch { return null; }
     },
+    async delete(key: string) {
+      const target = objectPath(key);
+      try { await unlink(target); } catch {}
+      try { await unlink(`${target}.content-type`); } catch {}
+    },
   };
 }
 
@@ -87,6 +92,7 @@ async function initialize() {
     `CREATE TABLE IF NOT EXISTS master_options (id TEXT PRIMARY KEY,kind TEXT NOT NULL,label TEXT NOT NULL,sort_order INTEGER NOT NULL DEFAULT 0,active INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS audit_logs (id TEXT PRIMARY KEY,submission_id TEXT,actor_email TEXT NOT NULL,actor_name TEXT NOT NULL,action TEXT NOT NULL,detail TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS app_sessions (token_hash TEXT PRIMARY KEY,user_id TEXT NOT NULL,expires_at TEXT NOT NULL,created_at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY,value TEXT NOT NULL,updated_at TEXT NOT NULL)`,
     `CREATE INDEX IF NOT EXISTS submissions_status_idx ON submissions(status)`,
     `CREATE INDEX IF NOT EXISTS approvals_submission_idx ON approvals(submission_id,step_number)`,
     `CREATE INDEX IF NOT EXISTS approvals_token_idx ON approvals(link_token_hash)`,

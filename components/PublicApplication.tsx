@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import SignaturePad, { SignaturePadHandle } from "./SignaturePad";
 import TrackingPanel from "./TrackingPanel";
+import BrandLockup from "@/components/BrandLockup";
+import { useBranding } from "@/components/BrandingProvider";
 
 type FormType = {
   id: string;
@@ -30,6 +32,7 @@ function currency(value: string) {
 }
 
 export default function PublicApplication() {
+  const { branding } = useBranding();
   const [types, setTypes] = useState<FormType[]>(fallbackTypes);
   const [selected, setSelected] = useState<FormType | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -99,18 +102,15 @@ export default function PublicApplication() {
   return (
     <main className="public-shell">
       <header className="public-header">
-        <a className="brand" href="/" aria-label="AINET Approval">
-          <span className="brand-mark">A</span>
-          <span><strong>AINET</strong><small>Approval</small></span>
-        </a>
+        <BrandLockup href="/" />
         <div className="public-nav"><button className={tab==="submit"?"active":""} onClick={()=>setTab("submit")}>Buat pengajuan</button><button className={tab==="track"?"active":""} onClick={()=>setTab("track")}>Pantau pengajuan</button><a className="admin-link" href="/admin">Masuk petugas <span>→</span></a></div>
       </header>
 
       {tab==="submit"&&<><section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">PT Axindo Infinitas Network</span>
-          <h1>Pengajuan internal,<br/><em>lebih ringkas dan tertib.</em></h1>
-          <p>Isi formulir, bubuhkan tanda tangan, dan kirim. Admin akan meneruskan pengajuan ke pejabat yang berwenang.</p>
+          <span className="eyebrow">{branding.companyName}</span>
+          <h1>{branding.heroTitle}<br/><em>{branding.heroHighlight}</em></h1>
+          <p>{branding.heroDescription}</p>
           <div className="hero-meta">
             <span><i>01</i> Pilih formulir</span>
             <span><i>02</i> Lengkapi data</span>
@@ -119,7 +119,7 @@ export default function PublicApplication() {
         </div>
         <div className="hero-card" aria-hidden="true">
           <div className="doc-sheet">
-            <div className="doc-top"><span>AINET</span><b>APPROVAL</b></div>
+            <div className="doc-top"><span>{branding.brandName}</span><b>{branding.appLabel.toUpperCase()}</b></div>
             <div className="doc-title-line" />
             <div className="doc-line wide" /><div className="doc-line" /><div className="doc-line medium" />
             <div className="doc-flow"><span>PEMOHON</span><i>→</i><span>MANAGER</span><i>→</i><span>GM</span></div>
@@ -200,7 +200,7 @@ export default function PublicApplication() {
 
       {tab==="track"&&<TrackingPanel/>}
 
-      <footer><div className="brand footer-brand"><span className="brand-mark">A</span><span><strong>AINET</strong><small>Beyond Connectivity</small></span></div><p>© 2026 PT Axindo Infinitas Network</p><span>Dokumen internal • Versi 1.0</span></footer>
+      <footer><BrandLockup className="brand footer-brand"/><p>© {new Date().getFullYear()} {branding.companyName}</p><span>{branding.footerText}</span></footer>
     </main>
   );
 }

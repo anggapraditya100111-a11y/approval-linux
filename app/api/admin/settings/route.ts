@@ -1,6 +1,7 @@
 import { requireApiUser } from "@/app/app-auth";
 import { ensureSchema, getD1, writeAudit } from "@/db/runtime";
 import { hashPassword } from "@/lib/security";
+import { getBranding, saveBranding } from "@/lib/branding";
 
 function adminRole(role: string) { return role === "admin" || role === "super_admin"; }
 
@@ -15,7 +16,8 @@ export async function GET() {
     requires_amount AS requiresAmount, active, created_at AS createdAt FROM form_types ORDER BY rowid`).all();
   const options = await db.prepare(`SELECT id, kind, label, sort_order AS sortOrder, active
     FROM master_options ORDER BY kind, sort_order, label`).all();
-  return Response.json({ users: users.results, formTypes: formTypes.results, options: options.results, currentUser: user });
+  const branding = await getBranding();
+  return Response.json({ users: users.results, formTypes: formTypes.results, options: options.results, branding, currentUser: user });
 }
 
 export async function POST(request: Request) {
@@ -40,6 +42,12 @@ export async function POST(request: Request) {
     const email = String(body.email || "").toLowerCase(); if (email === user.email) return Response.json({ error:"Akun yang sedang digunakan tidak dapat dinonaktifkan." },{status:400});
     await db.prepare("UPDATE users SET active = CASE active WHEN 1 THEN 0 ELSE 1 END, updated_at = ? WHERE email = ?").bind(now,email).run();
     await writeAudit({actorEmail:user.email,actorName:user.name,action:"status_pengguna_diubah",detail:email}); return Response.json({ok:true});
+  }
+  if (action === "save_branding") {
+    if (user.role !== "super_admin") return Response.json({error:"Hanya Super Admin yang dapat mengubah identitas aplikasi."},{status:403});
+    const branding = await saveBranding(body);
+    await writeAudit({actorEmail:user.email,actorName:user.name,action:"identitas_aplikasi_diubah",detail:branding.appName});
+    return Response.json({ok:true,branding});
   }
   if (action === "add_form_type") {
     const name=String(body.name||"").trim(); const description=String(body.description||"").trim(); if(!name) return Response.json({error:"Nama formulir wajib diisi."},{status:400});

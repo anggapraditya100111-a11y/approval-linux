@@ -2,14 +2,13 @@ import { NextResponse } from "next/server";
 import {
   ACCESS_COOKIE_MAX_AGE,
   ACCESS_COOKIE_NAME,
-  accessCookieValue,
-  getAccessPassword,
+  getAccessPasswordHash,
   verifyAccessPassword,
 } from "@/lib/access-gate";
 
 export async function POST(request: Request) {
-  const configuredPassword = getAccessPassword();
-  if (!configuredPassword) {
+  const configuredPasswordHash = getAccessPasswordHash();
+  if (!configuredPasswordHash) {
     return NextResponse.json(
       { error: "Password akses awal belum dikonfigurasi oleh administrator." },
       { status: 503 },
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(ACCESS_COOKIE_NAME, accessCookieValue(), {
+  response.cookies.set(ACCESS_COOKIE_NAME, configuredPasswordHash, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.COOKIE_SECURE === "true",
