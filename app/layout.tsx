@@ -1,26 +1,29 @@
 import type { Metadata } from "next";
+import { BrandingProvider } from "@/components/BrandingProvider";
+import { DEFAULT_BRANDING, getBranding } from "@/lib/branding";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "AINET Approval",
-  description: "Sistem persetujuan internal digital PT Axindo Infinitas Network.",
-  other: {
-    "codex-preview": "development",
-  },
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-  },
-};
+export const dynamic = "force-dynamic";
 
-export default function RootLayout({
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getBranding().catch(() => DEFAULT_BRANDING);
+  return {
+    title: branding.appName,
+    description: `${branding.appDescription} ${branding.companyName}.`,
+    other: { "codex-preview": "development" },
+    icons: { icon: branding.logoUrl || "/favicon.svg", shortcut: branding.logoUrl || "/favicon.svg" },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const branding = await getBranding().catch(() => DEFAULT_BRANDING);
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body><BrandingProvider initialBranding={branding}>{children}</BrandingProvider></body>
     </html>
   );
 }

@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { ReactNode, useState } from "react";
+import BrandLockup from "@/components/BrandLockup";
+import { useBranding } from "@/components/BrandingProvider";
 
 type User = { name: string; email: string; role: string; jobTitle: string };
 
@@ -14,6 +16,7 @@ const nav = [
 ];
 
 export default function AdminShell({ user, children }: { user: User; children: ReactNode }) {
+  const { branding } = useBranding();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const initials = user.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
@@ -21,7 +24,7 @@ export default function AdminShell({ user, children }: { user: User; children: R
   return (
     <div className="admin-shell">
       <aside className={`admin-sidebar ${open ? "open" : ""}`}>
-        <a className="brand admin-brand" href="/admin"><span className="brand-mark">A</span><span><strong>AINET</strong><small>Approval</small></span></a>
+        <BrandLockup href="/admin" className="brand admin-brand" />
         <nav>
           <span className="nav-caption">Utama</span>
           {nav.filter(item=>isAdmin||["/admin","/admin/persetujuan"].includes(item.href)).map((item) => <a key={item.href} href={item.href} className={pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href)) ? "active" : ""} onClick={() => setOpen(false)}><i>{item.icon}</i><span>{item.label}</span></a>)}
@@ -34,7 +37,7 @@ export default function AdminShell({ user, children }: { user: User; children: R
       </aside>
       {open && <button className="sidebar-overlay" aria-label="Tutup menu" onClick={() => setOpen(false)} />}
       <section className="admin-main">
-        <header className="mobile-admin-head"><button onClick={() => setOpen(true)} aria-label="Buka menu">☰</button><span>AINET Approval</span><i>{initials || "AU"}</i></header>
+        <header className="mobile-admin-head"><button onClick={() => setOpen(true)} aria-label="Buka menu">☰</button><span>{branding.appName}</span><i>{initials || "AU"}</i></header>
         {children}
       </section>
     </div>

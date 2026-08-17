@@ -6,6 +6,8 @@ Aplikasi persetujuan internal full digital untuk menggantikan formulir kertas. P
 
 - Pengajuan publik tanpa login, tanda tangan digital, dan lampiran foto/PDF.
 - Gerbang password awal untuk membuka seluruh aplikasi pada perangkat internal.
+- Password masuk dapat diganti oleh Super Admin dari aplikasi dengan validasi huruf dan angka.
+- Nama aplikasi, brand, perusahaan, teks halaman awal, footer, dan logo dapat disesuaikan oleh Super Admin.
 - Pengambilan lampiran langsung dari kamera perangkat.
 - Dropdown jabatan dan divisi yang dapat dikelola admin, dengan isian manual.
 - Password berbeda untuk setiap berkas agar pemohon dapat memantau progres.
@@ -79,10 +81,10 @@ Salin `.env.example` menjadi `.env`. Variabel penting:
 - `DATA_PATH`: lokasi permanen database dan upload.
 - `ADMIN_USERNAME`: username Super Admin awal.
 - `ADMIN_PASSWORD`: password Super Admin saat database pertama dibuat.
-- `APP_ACCESS_PASSWORD`: password bersama untuk membuka aplikasi sebelum halaman apa pun ditampilkan.
+- `APP_ACCESS_PASSWORD`: password awal/fallback untuk membuka aplikasi sebelum diubah oleh Super Admin.
 - `APP_BASE_URL`: alamat publik aplikasi untuk tautan approval.
 
-Password akses aplikasi disimpan sebagai cookie sesi HTTP-only selama 30 hari pada perangkat yang sudah lolos. Mengubah `APP_ACCESS_PASSWORD` akan langsung membatalkan sesi akses lama. Endpoint `/health` tetap terbuka untuk pemeriksaan kesehatan container.
+Password akses aplikasi disimpan sebagai cookie sesi HTTP-only selama 30 hari pada perangkat yang sudah lolos. Setelah diubah melalui menu Super Admin, hash password baru disimpan di volume data dan perangkat lain otomatis diminta memasukkan password baru. Endpoint `/health` tetap terbuka untuk pemeriksaan kesehatan container.
 
 Password Super Admin awal hanya digunakan ketika database masih kosong. Perubahan `.env` tidak menimpa password akun yang sudah tersimpan. Password akses aplikasi selalu mengikuti nilai terbaru pada `.env`.
 

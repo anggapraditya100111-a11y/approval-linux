@@ -1,12 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import BrandLockup from "@/components/BrandLockup";
+import { useBranding } from "@/components/BrandingProvider";
 
 function safeReturnTo(value: string) {
   return value.startsWith("/") && !value.startsWith("//") ? value : "/";
 }
 
 export default function AccessGateForm({ returnTo }: { returnTo: string }) {
+  const { branding } = useBranding();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,13 +35,10 @@ export default function AccessGateForm({ returnTo }: { returnTo: string }) {
   return (
     <main className="login-page access-gate-page">
       <section>
-        <div className="brand">
-          <span className="brand-mark">A</span>
-          <span><strong>AINET</strong><small>Approval</small></span>
-        </div>
+        <BrandLockup />
         <span className="eyebrow">Portal internal</span>
         <h1>Masukkan password akses</h1>
-        <p>Aplikasi ini hanya dapat dibuka oleh pihak internal yang memiliki password akses awal.</p>
+        <p>{branding.appName} hanya dapat dibuka oleh pihak internal yang memiliki password akses awal.</p>
         <form onSubmit={submit}>
           <label>
             Password akses
