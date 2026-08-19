@@ -82,7 +82,7 @@ Salin `.env.example` menjadi `.env`. Variabel penting:
 - `ADMIN_USERNAME`: username Super Admin awal.
 - `ADMIN_PASSWORD`: password Super Admin saat database pertama dibuat.
 - `APP_ACCESS_PASSWORD`: password awal/fallback untuk membuka aplikasi sebelum diubah oleh Super Admin.
-- `APP_BASE_URL`: alamat publik aplikasi untuk tautan approval.
+- `APP_BASE_URL`: alamat publik aplikasi untuk tautan approval dan tujuan setelah logout; default `https://approval.axindo.my.id`.
 
 Password akses aplikasi disimpan sebagai cookie sesi HTTP-only selama 30 hari pada perangkat yang sudah lolos. Setelah diubah melalui menu Super Admin, hash password baru disimpan di volume data dan perangkat lain otomatis diminta memasukkan password baru. Endpoint `/health` tetap terbuka untuk pemeriksaan kesehatan container.
 
