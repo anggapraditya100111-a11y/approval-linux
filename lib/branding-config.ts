@@ -27,7 +27,7 @@ export const DEFAULT_BRANDING: AppBranding = {
   heroTitle: "Pengajuan internal,",
   heroHighlight: "lebih ringkas dan tertib.",
   heroDescription: "Isi formulir, bubuhkan tanda tangan, dan kirim. Admin akan meneruskan pengajuan ke pejabat yang berwenang.",
-  footerText: "Dokumen internal • Versi 1.3.0",
+  footerText: "Dokumen internal • Versi 1.3.1",
   primaryColor: "#087fc1",
   accentColor: "#15b8dd",
   headerColor: "#071b33",

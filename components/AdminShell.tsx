@@ -15,23 +15,32 @@ const nav = [
   { href: "/admin/arsip", label: "Arsip", icon: "AR" },
 ];
 
-export default function AdminShell({ user, children }: { user: User; children: ReactNode }) {
+export default function AdminShell({ user, children, initialCollapsed = false }: { user: User; children: ReactNode; initialCollapsed?: boolean }) {
   const { branding } = useBranding();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
+  function toggleSidebar() {
+    setCollapsed((current) => {
+      const next = !current;
+      document.cookie = `ainet_sidebar=${next ? "collapsed" : "expanded"}; path=/; max-age=31536000; samesite=lax`;
+      return next;
+    });
+  }
   const initials = user.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   return (
-    <div className="admin-shell">
+    <div className={`admin-shell ${collapsed ? "sidebar-collapsed" : ""}`}>
       <aside className={`admin-sidebar ${open ? "open" : ""}`}>
+        <button className="sidebar-toggle" type="button" onClick={toggleSidebar} aria-label={collapsed ? "Perbesar menu" : "Perkecil menu"} aria-expanded={!collapsed}>{collapsed ? "›" : "‹"}</button>
         <BrandLockup href="/admin" className="brand admin-brand" />
         <nav>
           <span className="nav-caption">Utama</span>
-          {nav.filter(item=>isAdmin||["/admin","/admin/persetujuan"].includes(item.href)).map((item) => <a key={item.href} href={item.href} className={pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href)) ? "active" : ""} onClick={() => setOpen(false)}><i>{item.icon}</i><span>{item.label}</span></a>)}
+          {nav.filter(item=>isAdmin||["/admin","/admin/persetujuan"].includes(item.href)).map((item) => <a key={item.href} href={item.href} title={collapsed?item.label:undefined} className={pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href)) ? "active" : ""} onClick={() => setOpen(false)}><i>{item.icon}</i><span>{item.label}</span></a>)}
           <span className="nav-caption">Administrasi</span>
-          {isAdmin&&<a href="/admin/pengaturan" className={pathname.startsWith("/admin/pengaturan") ? "active" : ""} onClick={() => setOpen(false)}><i>AT</i><span>Pengaturan</span></a>}
-          {isAdmin&&<a href="/admin/audit" className={pathname.startsWith("/admin/audit") ? "active" : ""} onClick={() => setOpen(false)}><i>LG</i><span>Audit Log</span></a>}
-          <a href="/admin/profil" className={pathname.startsWith("/admin/profil") ? "active" : ""} onClick={() => setOpen(false)}><i>TT</i><span>Tanda Tangan Saya</span></a>
+          {isAdmin&&<a href="/admin/pengaturan" title={collapsed?"Pengaturan":undefined} className={pathname.startsWith("/admin/pengaturan") ? "active" : ""} onClick={() => setOpen(false)}><i>AT</i><span>Pengaturan</span></a>}
+          {isAdmin&&<a href="/admin/audit" title={collapsed?"Audit Log":undefined} className={pathname.startsWith("/admin/audit") ? "active" : ""} onClick={() => setOpen(false)}><i>LG</i><span>Audit Log</span></a>}
+          <a href="/admin/profil" title={collapsed?"Tanda Tangan Saya":undefined} className={pathname.startsWith("/admin/profil") ? "active" : ""} onClick={() => setOpen(false)}><i>TT</i><span>Tanda Tangan Saya</span></a>
         </nav>
         <div className="sidebar-user"><span>{initials || "AU"}</span><div><b>{user.name}</b><small>{user.jobTitle || user.role}</small></div><a href="/logout" title="Keluar">↗</a></div>
       </aside>
