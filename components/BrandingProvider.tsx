@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { AppBranding, DEFAULT_BRANDING } from "@/lib/branding-config";
 
 type BrandingContextValue = {
@@ -15,6 +15,14 @@ const BrandingContext = createContext<BrandingContextValue>({
 
 export function BrandingProvider({ initialBranding, children }: { initialBranding: AppBranding; children: ReactNode }) {
   const [branding, setBranding] = useState(initialBranding);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--blue", branding.primaryColor);
+    root.style.setProperty("--cyan", branding.accentColor);
+    root.style.setProperty("--navy", branding.headerColor);
+    root.style.setProperty("--header-text", branding.headerTextColor);
+    root.style.setProperty("--title-color", branding.titleColor);
+  }, [branding]);
   return <BrandingContext.Provider value={{ branding, setBranding }}>{children}</BrandingContext.Provider>;
 }
 

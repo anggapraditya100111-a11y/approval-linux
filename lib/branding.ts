@@ -13,7 +13,20 @@ const editableKeys: Array<keyof AppBranding> = [
   "heroHighlight",
   "heroDescription",
   "footerText",
+  "primaryColor",
+  "accentColor",
+  "headerColor",
+  "headerTextColor",
+  "titleColor",
 ];
+
+const colorKeys = new Set<keyof AppBranding>([
+  "primaryColor",
+  "accentColor",
+  "headerColor",
+  "headerTextColor",
+  "titleColor",
+]);
 
 const maxLengths: Record<string, number> = {
   appName: 80,
@@ -25,6 +38,11 @@ const maxLengths: Record<string, number> = {
   heroHighlight: 100,
   heroDescription: 320,
   footerText: 120,
+  primaryColor: 7,
+  accentColor: 7,
+  headerColor: 7,
+  headerTextColor: 7,
+  titleColor: 7,
 };
 
 export async function getBranding(): Promise<AppBranding> {
@@ -46,7 +64,10 @@ export async function saveBranding(input: Record<string, unknown>) {
   const now = new Date().toISOString();
   const statements = editableKeys.map((key) => {
     const fallback = DEFAULT_BRANDING[key];
-    const value = String(input[key] ?? "").trim().slice(0, maxLengths[key] || 200) || fallback;
+    const candidate = String(input[key] ?? "").trim().slice(0, maxLengths[key] || 200);
+    const value = colorKeys.has(key)
+      ? (/^#[0-9a-f]{6}$/i.test(candidate) ? candidate.toLowerCase() : fallback)
+      : candidate || fallback;
     return getD1().prepare(`INSERT INTO app_settings (key,value,updated_at) VALUES (?,?,?)
       ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`)
       .bind(`branding.${key}`, value, now);
