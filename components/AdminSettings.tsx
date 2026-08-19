@@ -9,6 +9,25 @@ type FormType = { id:string; name:string; description:string; requiresAmount:num
 type Option = { id:string; kind:string; label:string; sortOrder:number; active:number };
 type Data = { users:User[]; formTypes:FormType[]; options:Option[]; branding:AppBranding; currentUser:{role:string} };
 type Tab = "form" | "master" | "users" | "identity" | "security";
+type ThemeColors = Pick<AppBranding, "primaryColor" | "accentColor" | "headerColor" | "headerTextColor" | "titleColor">;
+
+const themePalettes: Array<{ name:string; colors:ThemeColors }> = [
+  { name:"AINET Biru", colors:{primaryColor:"#087fc1",accentColor:"#15b8dd",headerColor:"#071b33",headerTextColor:"#ffffff",titleColor:"#0b172a"} },
+  { name:"Biru Cerah", colors:{primaryColor:"#2563eb",accentColor:"#38bdf8",headerColor:"#172554",headerTextColor:"#ffffff",titleColor:"#172554"} },
+  { name:"Hijau Profesional", colors:{primaryColor:"#0f8a68",accentColor:"#34c99a",headerColor:"#123c34",headerTextColor:"#ffffff",titleColor:"#163d35"} },
+  { name:"Ungu Modern", colors:{primaryColor:"#6d5bd0",accentColor:"#a78bfa",headerColor:"#2e2459",headerTextColor:"#ffffff",titleColor:"#312e55"} },
+  { name:"Oranye Hangat", colors:{primaryColor:"#d66b16",accentColor:"#f0a33b",headerColor:"#442711",headerTextColor:"#ffffff",titleColor:"#3f2a1c"} },
+];
+
+function themeFromBranding(branding: AppBranding): ThemeColors {
+  return {
+    primaryColor: branding.primaryColor,
+    accentColor: branding.accentColor,
+    headerColor: branding.headerColor,
+    headerTextColor: branding.headerTextColor,
+    titleColor: branding.titleColor,
+  };
+}
 
 export default function AdminSettings() {
   const { setBranding } = useBranding();
@@ -20,6 +39,7 @@ export default function AdminSettings() {
   const [editingForm, setEditingForm] = useState<FormType | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showAccessPassword, setShowAccessPassword] = useState(false);
+  const [themeColors, setThemeColors] = useState<ThemeColors>(themePalettes[0].colors);
 
   function showMessage(text: string, type: "error" | "success" = "error") {
     setMessage(text); setMessageType(type);
@@ -32,6 +52,7 @@ export default function AdminSettings() {
       if (!response.ok) throw new Error(body.error);
       setData(body);
       setBranding(body.branding);
+      setThemeColors(themeFromBranding(body.branding));
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Pengaturan belum dapat dimuat.");
     }
@@ -45,7 +66,7 @@ export default function AdminSettings() {
         if (!response.ok) throw new Error(body.error);
         return body as Data;
       })
-      .then((body) => { if (active) { setData(body); setBranding(body.branding); } })
+      .then((body) => { if (active) { setData(body); setBranding(body.branding); setThemeColors(themeFromBranding(body.branding)); } })
       .catch((error) => { if (active) showMessage(error instanceof Error ? error.message : "Pengaturan belum dapat dimuat."); });
     return () => { active = false; };
   }, [setBranding]);
@@ -87,7 +108,7 @@ export default function AdminSettings() {
 
   async function saveIdentity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget);
-    await send({ action:"save_branding", appName:form.get("appName"), brandName:form.get("brandName"), appLabel:form.get("appLabel"), companyName:form.get("companyName"), appDescription:form.get("appDescription"), heroTitle:form.get("heroTitle"), heroHighlight:form.get("heroHighlight"), heroDescription:form.get("heroDescription"), footerText:form.get("footerText") }, "Identitas aplikasi berhasil diperbarui.");
+    await send({ action:"save_branding", appName:form.get("appName"), brandName:form.get("brandName"), appLabel:form.get("appLabel"), companyName:form.get("companyName"), appDescription:form.get("appDescription"), heroTitle:form.get("heroTitle"), heroHighlight:form.get("heroHighlight"), heroDescription:form.get("heroDescription"), footerText:form.get("footerText"), ...themeColors }, "Identitas dan warna aplikasi berhasil diperbarui.");
   }
 
   async function saveAccessPassword(event: FormEvent<HTMLFormElement>) {
@@ -158,7 +179,34 @@ export default function AdminSettings() {
       </div>
       : tab === "identity" && superAdmin ? <div className="branding-settings-layout">
         <section className="admin-card branding-logo-card"><div className="card-heading"><div><b>Logo aplikasi</b><small>PNG, JPG, atau WebP • maksimal 2 MB</small></div></div><div className="branding-logo-preview">{data.branding.logoUrl?<img src={data.branding.logoUrl} alt={data.branding.appName}/>:<span>{data.branding.brandName.slice(0,1)}</span>}</div><form onSubmit={uploadLogo}><label>Pilih logo<input name="logo" type="file" required accept="image/png,image/jpeg,image/webp"/></label><button disabled={busy} className="button primary">Unggah logo</button>{data.branding.logoUrl&&<button type="button" disabled={busy} className="button secondary" onClick={removeLogo}>Hapus logo</button>}</form></section>
-        <section className="admin-card settings-form branding-form"><div className="card-heading"><div><b>Nama dan tulisan aplikasi</b><small>Perubahan langsung diterapkan pada tampilan, halaman login, dan dokumen cetak</small></div></div><form key={data.branding.logoUpdatedAt||"branding"} onSubmit={saveIdentity}><div className="form-grid"><label>Nama aplikasi<input name="appName" required maxLength={80} defaultValue={data.branding.appName}/></label><label>Nama brand<input name="brandName" required maxLength={30} defaultValue={data.branding.brandName}/></label></div><div className="form-grid"><label>Label aplikasi<input name="appLabel" required maxLength={30} defaultValue={data.branding.appLabel}/></label><label>Nama perusahaan<input name="companyName" required maxLength={120} defaultValue={data.branding.companyName}/></label></div><label>Deskripsi aplikasi<input name="appDescription" required maxLength={180} defaultValue={data.branding.appDescription}/></label><div className="form-grid"><label>Judul halaman awal<input name="heroTitle" required maxLength={100} defaultValue={data.branding.heroTitle}/></label><label>Teks sorotan judul<input name="heroHighlight" required maxLength={100} defaultValue={data.branding.heroHighlight}/></label></div><label>Deskripsi halaman awal<textarea name="heroDescription" required maxLength={320} rows={4} defaultValue={data.branding.heroDescription}/></label><label>Teks bagian bawah<input name="footerText" required maxLength={120} defaultValue={data.branding.footerText}/></label><button disabled={busy} className="button primary">Simpan identitas aplikasi</button></form></section>
+        <section className="admin-card settings-form branding-form">
+          <div className="card-heading"><div><b>Nama, tulisan, dan warna aplikasi</b><small>Perubahan langsung diterapkan pada halaman publik, admin, login, dan link approval</small></div></div>
+          <form key={`${data.branding.logoUpdatedAt}-${data.branding.appName}-${data.branding.primaryColor}`} onSubmit={saveIdentity}>
+            <div className="form-grid"><label>Nama aplikasi<input name="appName" required maxLength={80} defaultValue={data.branding.appName}/></label><label>Nama brand<input name="brandName" required maxLength={30} defaultValue={data.branding.brandName}/></label></div>
+            <div className="form-grid"><label>Label aplikasi<input name="appLabel" required maxLength={30} defaultValue={data.branding.appLabel}/></label><label>Nama perusahaan<input name="companyName" required maxLength={120} defaultValue={data.branding.companyName}/></label></div>
+            <label>Deskripsi aplikasi<input name="appDescription" required maxLength={180} defaultValue={data.branding.appDescription}/></label>
+            <div className="form-grid"><label>Judul halaman awal<input name="heroTitle" required maxLength={100} defaultValue={data.branding.heroTitle}/></label><label>Teks sorotan judul<input name="heroHighlight" required maxLength={100} defaultValue={data.branding.heroHighlight}/></label></div>
+            <label>Deskripsi halaman awal<textarea name="heroDescription" required maxLength={320} rows={4} defaultValue={data.branding.heroDescription}/></label>
+            <label>Teks bagian bawah<input name="footerText" required maxLength={120} defaultValue={data.branding.footerText}/></label>
+
+            <div className="theme-form-heading"><b>Palet warna</b><small>Pilih palet siap pakai atau atur setiap warna secara manual.</small></div>
+            <div className="theme-presets">{themePalettes.map((palette) => {
+              const selected = JSON.stringify(themeColors) === JSON.stringify(palette.colors);
+              return <button type="button" className={selected ? "active" : ""} key={palette.name} onClick={() => setThemeColors(palette.colors)}>
+                <span><i style={{background:palette.colors.headerColor}}/><i style={{background:palette.colors.primaryColor}}/><i style={{background:palette.colors.accentColor}}/></span>
+                <b>{palette.name}</b>{selected && <em>Dipilih</em>}
+              </button>;
+            })}</div>
+            <div className="theme-color-grid">
+              <label>Warna utama<div><input type="color" value={themeColors.primaryColor} onChange={(event)=>setThemeColors({...themeColors,primaryColor:event.target.value})}/><span>{themeColors.primaryColor}</span></div></label>
+              <label>Warna aksen<div><input type="color" value={themeColors.accentColor} onChange={(event)=>setThemeColors({...themeColors,accentColor:event.target.value})}/><span>{themeColors.accentColor}</span></div></label>
+              <label>Warna header/sidebar<div><input type="color" value={themeColors.headerColor} onChange={(event)=>setThemeColors({...themeColors,headerColor:event.target.value})}/><span>{themeColors.headerColor}</span></div></label>
+              <label>Warna tulisan header<div><input type="color" value={themeColors.headerTextColor} onChange={(event)=>setThemeColors({...themeColors,headerTextColor:event.target.value})}/><span>{themeColors.headerTextColor}</span></div></label>
+              <label>Warna judul<div><input type="color" value={themeColors.titleColor} onChange={(event)=>setThemeColors({...themeColors,titleColor:event.target.value})}/><span>{themeColors.titleColor}</span></div></label>
+            </div>
+            <button disabled={busy} className="button primary">Simpan identitas dan warna</button>
+          </form>
+        </section>
       </div>
       : tab === "security" && superAdmin ? <div className="security-settings-layout"><section className="admin-card settings-form security-card"><div className="card-heading"><div><b>Password masuk aplikasi</b><small>Password ini dibagikan kepada pengguna internal sebelum halaman aplikasi dapat dibuka</small></div></div><form onSubmit={saveAccessPassword}><label>Password baru<div className="password-input"><input name="password" type={showAccessPassword?"text":"password"} required minLength={8} maxLength={64} pattern="[A-Za-z0-9]+" autoComplete="new-password" placeholder="8–64 huruf dan angka"/><button type="button" onClick={() => setShowAccessPassword(!showAccessPassword)} aria-label={showAccessPassword?"Sembunyikan password":"Lihat password"} title={showAccessPassword?"Sembunyikan password":"Lihat password"}>👁</button></div></label><label>Ulangi password baru<div className="password-input"><input name="confirmation" type={showAccessPassword?"text":"password"} required minLength={8} maxLength={64} pattern="[A-Za-z0-9]+" autoComplete="new-password" placeholder="Ketik ulang password"/><button type="button" onClick={() => setShowAccessPassword(!showAccessPassword)} aria-label={showAccessPassword?"Sembunyikan password":"Lihat password"} title={showAccessPassword?"Sembunyikan password":"Lihat password"}>👁</button></div></label><p className="settings-hint">Gunakan kombinasi huruf dan angka tanpa spasi atau simbol. Setelah disimpan, perangkat lain akan diminta memasukkan password baru.</p><button disabled={busy} className="button primary">Ganti password masuk</button></form></section></div>
       : <div className="mini-empty">Menu ini hanya tersedia untuk Super Admin.</div>}
